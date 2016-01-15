@@ -529,6 +529,7 @@ public class EchoServer extends Task {
                 });
 
                 try {
+                    System.out.println("CIAO");
                     // Create a default MimeMessage object.
                     MimeMessage message = new MimeMessage(session);
 
