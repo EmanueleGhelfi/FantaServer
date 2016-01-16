@@ -516,7 +516,7 @@ public class EchoThread extends Thread {
             }.getType();
             this.team = gson.fromJson(team,listType);
             System.out.println("Team: " + team.toString());
-            ModifyTeamInDB();
+            ModifyTeamInDB(in,out);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -524,19 +524,61 @@ public class EchoThread extends Thread {
 
     }
 
-    private void ModifyTeamInDB() {
+    private void ModifyTeamInDB(BufferedReader in, PrintWriter out) {
+        ArrayList<Player> backup = new ArrayList<>();
+
         try {
             Statement s = conn.createStatement();
+            //make a backup
+
+            ResultSet res = s.executeQuery("SELECT * FROM squadre WHERE TeamName='"+currentUser.getTeamName()+"' and username='"+currentUser.getUserName()+"'");
+            while (res.next()){
+                Player player = new Player();
+                player.setCognome(res.getString("Cognome"));
+                player.setId(res.getInt("idGioc"));
+                player.setPos(res.getString("Pos"));
+                backup.add(player);
+            }
             //Delete previous team
             s.execute("DELETE FROM squadre WHERE TeamName='"+currentUser.getTeamName()+"' and username='"+currentUser.getUserName()+"'");
             //Insert the correct team
             for(int i = 0; i< team.size(); i++){
+                System.out.println("Pos: "+ team.get(i).getPos());
+                if(team.get(i).getPos()==null || team.get(i).getPos().equals("null")){
+                    System.out.println("dentro if di pos");
+                    team.get(i).setPos("0");
+                }
                 boolean val = s.execute("INSERT INTO squadre(Username,TeamName,Cognome,Pos,idGioc) VALUE ('" + currentUser.getUserName() + "','" + currentUser.getTeamName() + "','" + team.get(i).getCognome() + "','"+team.get(i).getPos()+"','"+team.get(i).getId()+"')");
+            }
+            //update money
+            //s.execute("UPDATE client cl,(SELECT sum(Costo) as costo, squadre.username FROM squadre join giocatori on squadre.idGioc = giocatori.id GROUP by squadre.username) temp set cl.Soldi = 250 - temp.costo where temp.username = cl.Username");
+            out.println("GETMONEY");
+            try {
+                int money = Integer.parseInt(in.readLine());
+                s.execute("UPDATE client set Soldi="+money+" WHERE Username='"+currentUser.getUserName()+"'");
+                currentUser.setSoldi(money);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
             //Look for a team for the next day and delete it
             s.execute("DELETE FROM formazione WHERE userName='"+currentUser.getUserName()+"' and nomeSquadra='"+currentUser.getTeamName()+"' and giornata = 1 + (SELECT max(giornata) FROM votogiocatore)");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Ripristino backup");
+            Statement s = null;
+            try {
+                s = conn.createStatement();
+                for(int i = 0; i< backup.size(); i++){
+                    System.out.println(backup.get(i).getPos());
+                    if(backup.get(i).getPos()==null || backup.get(i).getPos().equals("null")){
+                        backup.get(i).setPos("0");
+                    }
+                    boolean val = s.execute("INSERT INTO squadre(Username,TeamName,Cognome,Pos,idGioc) VALUE ('" + currentUser.getUserName() + "','" + currentUser.getTeamName() + "','" + backup.get(i).getCognome() + "','"+backup.get(i).getPos()+"','"+backup.get(i).getId()+"')");
+                }
+            } catch (SQLException e1) {
+                e1.printStackTrace();
+            }
+
         }
 
     }
@@ -548,7 +590,7 @@ public class EchoThread extends Thread {
             if(line.equals(Communication.READYFORALLPLAYERS)) {
                 Statement s = conn.createStatement();
                 ArrayList allplayers = new ArrayList();
-                ResultSet res = s.executeQuery("SELECT * from giocatori");
+                ResultSet res = s.executeQuery("SELECT * from giocatori WHERE presente=TRUE");
                 while (res.next()){
                     allplayers.add(new Player(res.getString("Cognome"), res.getInt("Costo"), res.getInt("id"), res.getString("Ruolo").charAt(0), res.getString("Squadra")));
                 }
@@ -792,7 +834,7 @@ public class EchoThread extends Thread {
         ArrayList<Player> players = new ArrayList<>();
         try {
             Statement st = conn.createStatement();
-            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='A'");
+            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='A' AND presente=TRUE ");
             while (res.next()) {
                 players.add(new Player(res.getString("Cognome"), res.getInt("Costo"), res.getInt("id"), res.getString("Ruolo").charAt(0), res.getString("Squadra")));
             }
@@ -821,7 +863,7 @@ public class EchoThread extends Thread {
         ArrayList<Player> players = new ArrayList<>();
         try {
             Statement st = conn.createStatement();
-            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='C'");
+            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='C' AND presente=TRUE");
             while (res.next()) {
                 players.add(new Player(res.getString("Cognome"), res.getInt("Costo"), res.getInt("id"), res.getString("Ruolo").charAt(0), res.getString("Squadra")));
             }
@@ -850,7 +892,7 @@ public class EchoThread extends Thread {
         ArrayList<Player> players = new ArrayList<>();
         try {
             Statement st = conn.createStatement();
-            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='D'");
+            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='D' AND presente=TRUE");
             while (res.next()) {
                 players.add(new Player(res.getString("Cognome"), res.getInt("Costo"), res.getInt("id"), res.getString("Ruolo").charAt(0), res.getString("Squadra")));
             }
@@ -877,7 +919,7 @@ public class EchoThread extends Thread {
         ArrayList<Player> players = new ArrayList<>();
         try {
             Statement st = conn.createStatement();
-            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='P'");
+            ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='P' and presente=TRUE");
             while(res.next()){
                 players.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
             }
@@ -906,7 +948,7 @@ public class EchoThread extends Thread {
         System.out.println(user.getImagePath());
         try {
             Statement st = conn.createStatement();
-            boolean val = st.execute("INSERT INTO client(Username,Pw,TeamName,email,imagePath,DataNascita) VALUE ('"+user.getUserName()+"','"+user.getPassword()+"','"+user.getTeamName()+"','"+user.getEmail()+"','"+user.getImagePath()+"','"+user.getDataNacita()+"')");
+            boolean val = st.execute("INSERT INTO client(Username,Pw,TeamName,email,imagePath,DataNascita,Soldi) VALUE ('"+user.getUserName()+"','"+user.getPassword()+"','"+user.getTeamName()+"','"+user.getEmail()+"','"+user.getImagePath()+"','"+user.getDataNacita()+"','"+user.getSoldi()+"')");
             System.out.println("Inserito");
             out = new PrintWriter(socket.getOutputStream(), true);
             return true;
@@ -933,14 +975,16 @@ public class EchoThread extends Thread {
             while (res.next()) {
                 if (res.getDate("DataNascita") != null){
                     java.util.Date datastr = new java.util.Date(res.getDate("DataNascita").getTime());
-                LocalDate date = datastr.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                this.currentUser = new User(date, res.getString("email"), res.getString("imagePath"), res.getString("Pw"), null, res.getString("TeamName"), res.getString("Username"));
+                    LocalDate date = datastr.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                    this.currentUser = new User(date, res.getString("email"), res.getString("imagePath"), res.getString("Pw"), null, res.getString("TeamName"), res.getString("Username"));
+                    this.currentUser.setSoldi(res.getInt("Soldi"));
 
                 }
                 else {
                     Date date = new Date(2015,8,15);
                     LocalDate localDate = date.toLocalDate();
                     this.currentUser = new User(localDate, res.getString("email"), res.getString("imagePath"), res.getString("Pw"), null, res.getString("TeamName"), res.getString("Username"));
+                    this.currentUser.setSoldi(res.getInt("Soldi"));
                 }
                 resSize++;
             }

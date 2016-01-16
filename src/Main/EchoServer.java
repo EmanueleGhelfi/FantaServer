@@ -624,10 +624,10 @@ public class EchoServer extends Task {
                 String msg = res.getString("Cognome");
                 String squadra = res.getString("Squadra");
                 System.out.println(id + "\t" + msg+"\t"+squadra); }
-            /*st.execute("UPDATE client,(SELECT sum(Costo) as costo, squadre.username as tempUser FROM giocatori join squadre on giocatori.id = squadre.idGioc WHERE giocatori.presente = FALSE GROUP by squadre.username) set client.Soldi= client.Soldi+costo WHERE client.Username = tempUser");
+            st.execute("UPDATE client cl,(SELECT sum(Costo) as costo, squadre.username as tempUser FROM giocatori join squadre on giocatori.id = squadre.idGioc WHERE giocatori.presente = FALSE GROUP by squadre.username) temp set cl.Soldi= cl.Soldi+costo WHERE cl.Username = temp.tempUser");
             st.execute("DELETE squadre FROM squadre JOIN giocatori on squadre.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
             st.execute("DELETE formazione FROM formazione JOIN giocatori on formazione.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
-        */}
+        }
         catch (Exception e) {
             e.printStackTrace();
         }

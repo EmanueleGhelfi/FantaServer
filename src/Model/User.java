@@ -18,6 +18,7 @@ public class User {
     private String email;
     private String imagePath;
     private LocalDate dataNacita;
+    private int soldi;
 
     public String getPassword() {
         return password;
@@ -75,6 +76,25 @@ public class User {
         this.team = team;
         this.teamName = teamName;
         this.userName = userName;
+    }
+
+    public User(LocalDate dataNacita, String email, String imagePath, String password, int soldi, ArrayList<Player> team, String teamName, String userName) {
+        this.dataNacita = dataNacita;
+        this.email = email;
+        this.imagePath = imagePath;
+        this.password = password;
+        this.soldi = soldi;
+        this.team = team;
+        this.teamName = teamName;
+        this.userName = userName;
+    }
+
+    public int getSoldi() {
+        return soldi;
+    }
+
+    public void setSoldi(int soldi) {
+        this.soldi = soldi;
     }
 
     public LocalDate getDataNacita() {
