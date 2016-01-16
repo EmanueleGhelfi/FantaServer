@@ -73,6 +73,7 @@ public class EchoServer extends Task {
             public void run () {
 
                 updateVoti(conn);
+                InsertPlayerToDB(conn);
             }
         };
 
@@ -579,32 +580,54 @@ public class EchoServer extends Task {
         return null;
     }
 
-    private static void InsertPlayerToDB(Document doc) {
-        String url ="jdbc:mysql://localhost:3306/DBFIRST";
+    private static void InsertPlayerToDB(Connection conn) {
+        /*String url ="jdbc:mysql://localhost:3306/DBFIRST";
         String driver = "com.mysql.jdbc.Driver";
         String userName = "manu";
         String password = "inter";
+        */
 
         try {
-            Class.forName(driver).newInstance();
+            /*Class.forName(driver).newInstance();
             Connection conn = DriverManager.getConnection(url, userName, password);
+            */
+            Document doc = Jsoup.connect("http://www.gazzetta.it/calcio/fantanews/statistiche/serie-a-2015-16/all").get();
             java.sql.Statement st = conn.createStatement();
             Elements name = doc.getElementsByClass("field-giocatore");
             Elements team = doc.getElementsByClass("field-sqd");
             Elements price = doc.getElementsByClass("field-q");
             Elements role = doc.getElementsByClass("field-ruolo");
+            st.execute("UPDATE giocatori set presente='0'");
             for (int i = 0; i< name.size()-1; i++) {
-                boolean val = st.execute("INSERT INTO giocatori (Cognome,Squadra,Costo,Ruolo)  VALUE ('"+name.get(i+1).text()+"','"+team.get(i+1).getElementsByClass("hidden-team-name").get(0).text()+"','"+price.get(i+1).text()+"','"+role.get(i+1).text().substring(0,1)+"')");
-                if (val)
-                    System.out.println("OK");
+                String ruolo = role.get(i+1).text().substring(0,1);
+                //provo a inserire nel db
+                if(role.get(i+1).text().substring(0,1).equals("T")){
+                    ruolo="C";
+                }
+                try {
+
+                    boolean val = st.execute("INSERT INTO giocatori (Cognome,Squadra,Costo,Ruolo,presente)  VALUE ('"+name.get(i+1).text()+"','"+team.get(i+1).getElementsByClass("hidden-team-name").get(0).text()+"','"+price.get(i+1).text()+"','"+ruolo+"','1')");
+                    if (val)
+                        System.out.println("OK, inserito: "+ name.get(i+1).text());
+                }
+                catch (SQLException e){
+                    System.out.println("ERRORE: "+name.get(i+1).text());
+                    boolean retry = st.execute("UPDATE giocatori set Squadra='"+team.get(i+1).getElementsByClass("hidden-team-name").get(0).text()+"', Costo='"+price.get(i+1).text()+"', presente='1' WHERE Cognome='"+name.get(i+1).text()+"' AND Ruolo='"+ruolo+"'");
+                    if(retry)
+                        System.out.println("Modificato");
+                }
+
             }
             ResultSet res = st.executeQuery("SELECT * FROM giocatori");
             while (res.next()) {
                 int id = res.getInt("id");
                 String msg = res.getString("Cognome");
                 String squadra = res.getString("Squadra");
-                System.out.println(id + "\t" + msg); }
-        }
+                System.out.println(id + "\t" + msg+"\t"+squadra); }
+            /*st.execute("UPDATE client,(SELECT sum(Costo) as costo, squadre.username as tempUser FROM giocatori join squadre on giocatori.id = squadre.idGioc WHERE giocatori.presente = FALSE GROUP by squadre.username) set client.Soldi= client.Soldi+costo WHERE client.Username = tempUser");
+            st.execute("DELETE squadre FROM squadre JOIN giocatori on squadre.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
+            st.execute("DELETE formazione FROM formazione JOIN giocatori on formazione.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
+        */}
         catch (Exception e) {
             e.printStackTrace();
         }
