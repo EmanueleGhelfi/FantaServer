@@ -132,6 +132,12 @@ public class EchoThread extends Thread {
                         case (Communication.GETINFO):
                             SendInfo(in,out);
                             break;
+                        case ("GETENDPOS"):
+                            System.out.println("GETENDPOS");
+                            SendEndPos(in,out);
+                            break;
+
+
                         /*default: if(auth && !user){
                             System.out.println("OKuser");
                             out.println("OKUSER");
@@ -156,6 +162,29 @@ public class EchoThread extends Thread {
                 RemoveUser(currentUser,out);
             //Connection reset
             }
+
+    }
+
+    private void SendEndPos(BufferedReader in, PrintWriter out) {
+
+        try {
+                Statement s = conn.createStatement();
+                ArrayList<SimpleTeam> simpleTeams = new ArrayList<>();
+                // OLD VERSION
+                //ResultSet res = s.executeQuery("SELECT nomeSquadra,userName, sum(Voto) as somma FROM formazione JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome and formazione.giornata = votogiocatore.giornata WHERE formazione.Titolare=1 GROUP BY userName,nomeSquadra ORDER BY somma DESC ");
+                //ResultSet res = s.executeQuery("SELECT client.UserName,client.TeamName, sum(Voto) as somma FROM (client LEFT JOIN formazione on client.Username = formazione.userName and client.TeamName = formazione.nomeSquadra) LEFT JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome and formazione.giornata = votogiocatore.giornata WHERE formazione.Titolare=1 OR formazione.Titolare IS NULL GROUP BY userName,teamName ORDER BY somma DESC ");
+                ResultSet res = s.executeQuery("SELECT UserName, TeamName, sum(punteggio) as somma FROM punteggi GROUP BY UserName,TeamName ORDER BY somma DESC ");
+                int cont=1;
+                while (res.next() && !res.getString("userName").equals(currentUser.getUserName()) ){
+                    cont++;
+                }
+
+                out.println(""+cont);
+                System.out.println(cont);
+            }
+             catch (SQLException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -424,7 +453,16 @@ public class EchoThread extends Thread {
                 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String date = format.format(datastr);
                 System.out.println("MinData : "+date);
-                out.println(date);
+                if(minData==(new Date(2015/8/15))) {
+                    out.println(date);
+                    out.println("END");
+
+                }
+                else {
+                    out.println(date);
+                    //TODO: remove
+                    out.println("END");
+                }
 
             }
         } catch (IOException e) {
