@@ -997,7 +997,7 @@ public class EchoThread extends Thread {
 
             ResultSet res2 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='D' and presente=TRUE");
             while(res2.next()){
-                defensors.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+                defensors.add(new Player(res2.getString("Cognome"),res2.getInt("Costo"),res2.getInt("id"), res2.getString("Ruolo").charAt(0),res2.getString("Squadra")));
             }
             defensors.sort(new Comparator<Player>() {
                 @Override
@@ -1008,7 +1008,7 @@ public class EchoThread extends Thread {
 
             ResultSet res3 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='C' and presente=TRUE");
             while(res3.next()){
-                midfielders.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+                midfielders.add(new Player(res3.getString("Cognome"),res3.getInt("Costo"),res3.getInt("id"), res3.getString("Ruolo").charAt(0),res3.getString("Squadra")));
             }
             midfielders.sort(new Comparator<Player>() {
                 @Override
@@ -1019,7 +1019,7 @@ public class EchoThread extends Thread {
 
             ResultSet res4 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='A' and presente=TRUE");
             while(res4.next()){
-                strikers.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+                strikers.add(new Player(res4.getString("Cognome"),res4.getInt("Costo"),res4.getInt("id"), res4.getString("Ruolo").charAt(0),res4.getString("Squadra")));
             }
             strikers.sort(new Comparator<Player>() {
                 @Override

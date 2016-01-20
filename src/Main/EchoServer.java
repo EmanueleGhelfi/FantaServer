@@ -237,84 +237,8 @@ public class EchoServer extends Task {
             SendNotification();
             //SendEmail(conn);
         }
-
-
-
     }
 
-    /*private void SendEmail(Connection conn) {
-        ArrayList<String> client
-
-        try {
-            Statement s = conn.createStatement();
-            ResultSet res = s.executeQuery("SELECT email from client");
-
-            // Recipient's email ID needs to be mentioned.
-        String to = currentUser.getEmail();
-
-        // Sender's email ID needs to be mentioned
-        String from = "fantadeveloper@gmail.com";
-
-        // Assuming you are sending email from gmail
-        String host = "smtp.gmail.com";
-
-        // Get system properties
-        Properties properties = System.getProperties();
-
-        //setup properties
-        properties.put("mail.smtp.user",from);
-        properties.put("mail.smtp.password", "fantaDeveloper94");
-        properties.put("mail.smtp.host", host);
-        properties.put("mail.smtp.port", "587");
-        properties.put("mail.debug", "true");
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable","true");
-        properties.put("mail.smtp.EnableSSL.enable","true");
-
-
-        // Setup mail server
-        properties.setProperty("mail.smtp.host", host);
-
-        // Get the default Session object with AUTHENTICATOR. IMPORTANT!
-        Session session = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
-            @Override
-            protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
-                return new javax.mail.PasswordAuthentication("fantadeveloper@gmail.com","fantaDeveloper94");
-            }
-        });
-
-        try{
-            // Create a default MimeMessage object.
-            MimeMessage message = new MimeMessage(session);
-
-            // Set From: header field of the header.
-            message.setFrom(new InternetAddress(from));
-
-            // Set To: header field of the header.
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
-
-            // Set Subject: header field
-            message.setSubject("Registrazione Fantacalcio");
-
-            // Now set the actual message
-            message.setText("Registrazione avvenuta con successo. Ecco i tuoi dati: user: "+currentUser.getUserName()+" password: "+currentUser.getPassword());
-
-
-
-            Transport tr = session.getTransport("smtp");
-            tr.connect(session.getProperty("mail.smtp.host"),  session.getProperty("mail.smtp.user"), session.getProperty("mail.smtp.password"));
-
-
-            tr.sendMessage(message, message.getAllRecipients());
-            tr.close();
-        }catch (MessagingException mex) {
-            mex.printStackTrace();
-        }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    */
 
     public void SendNotification() {
         for(int i = 0; i< userArrayList.size();i++){
