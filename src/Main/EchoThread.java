@@ -242,9 +242,9 @@ public class EchoThread extends Thread {
                 RemoveUser(currentUser,out);
                 ChangePhotoName(user.getUserName());
                 ChangeInClient(user);
-                ChangeInFormazione(user);
-                ChangeInPunteggi(user);
-                ChangeInSquadre(user);
+                //ChangeInFormazione(user);
+                //ChangeInPunteggi(user);
+                //ChangeInSquadre(user);
                 this.currentUser=user;
                 mainInstance.addUser(currentUser,out);
                 out.println(Communication.USEROK);
@@ -528,6 +528,7 @@ public class EchoThread extends Thread {
         ArrayList votesPlayer = new ArrayList();
         try {
             String giornata= in.readLine();
+            System.out.println("GIORNATA "+giornata);
             Statement s = conn.createStatement();
             ResultSet res = s.executeQuery("SELECT formazione.Cognome, votogiocatore.Voto, formazione.Titolare, giocatori.Ruolo, formazione.Entrato,formazione.Sostituito FROM (formazione left join votogiocatore on formazione.Cognome = votogiocatore.Cognome and formazione.giornata = votogiocatore.Giornata) JOIN giocatori on formazione.Cognome = giocatori.Cognome and formazione.idGioc=giocatori.id WHERE formazione.userName = '"+currentUser.getUserName()+"' and formazione.nomeSquadra='"+currentUser.getTeamName()+"' and formazione.giornata='"+giornata+"' order by formazione.Titolare DESC");
             while (res.next()){
