@@ -19,7 +19,7 @@ import java.io.IOException;
 public class ServerMain extends Application {
 
     private MainController mainController;
-    private EchoServer task;
+    private Server task;
     private Thread thread;
 
 
@@ -47,7 +47,7 @@ public class ServerMain extends Application {
     }
 
     public void OnStartServer() {
-        task = new EchoServer(this);
+        task = new Server(this);
          thread = new Thread(task);
         thread.start();
     }

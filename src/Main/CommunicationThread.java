@@ -3,11 +3,9 @@ package Main;
 import Constants.Communication;
 import Model.*;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.lang.reflect.Type;
 import java.net.*;
 import java.sql.*;
 import java.sql.Date;
@@ -23,7 +21,7 @@ import javax.mail.internet.MimeMessage;
 /**
  * Created by Emanuele on 15/10/2015.
  */
-public class EchoThread extends Thread {
+public class CommunicationThread extends Thread {
 
     protected Socket socket;
     private int number;
@@ -42,9 +40,9 @@ public class EchoThread extends Thread {
     private ArrayList<Player> team;
 
     //Instance of Echo Server
-    private EchoServer mainInstance;
+    private Server mainInstance;
 
-    public EchoThread(Socket clientSocket, int number,Connection conn, EchoServer mainInstance) {
+    public CommunicationThread(Socket clientSocket, int number, Connection conn, Server mainInstance) {
         this.socket = clientSocket;
         this.number = number;
         this.conn = conn;
@@ -56,7 +54,7 @@ public class EchoThread extends Thread {
         BufferedReader in = null;
         PrintWriter out = null;
         //SendWelcome();
-        //Main.EchoServer.mossa = 0;
+        //Main.Server.mossa = 0;
         try {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             //reader = new BufferedReader(new InputStreamReader(in));

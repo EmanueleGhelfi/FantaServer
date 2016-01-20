@@ -26,7 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class EchoServer extends Task {
+public class Server extends Task<Void> {
 
     //public static int mossa;
 
@@ -36,7 +36,7 @@ public class EchoServer extends Task {
     private ServerSocket serverSocket;
     private ArrayList<Socket> socketArray = new ArrayList<>();
 
-    public EchoServer(ServerMain serverMain) {
+    public Server(ServerMain serverMain) {
         userArrayList = new ArrayList<>();
         portNumber = 4444;
         this.serverMain = serverMain;
@@ -44,7 +44,7 @@ public class EchoServer extends Task {
     }
 
     @Override
-    protected Object call() throws Exception {
+    protected Void call() throws Exception {
 
         serverSocket = null;
         Socket clientSocket = null;
@@ -53,60 +53,43 @@ public class EchoServer extends Task {
 
         try {
             serverSocket = new ServerSocket(portNumber);
+
+            //Server connect to MySQL Server
+            conn = ConnectToDB();
+
+            //Ogni ora cerca di scaricare le nuove giornate se ce ne sono e aggiorna il DB dei giocatori
+            Timer timer = new Timer();
+            TimerTask hourlyTask = new TimerTask() {
+                @Override
+                public void run() {
+                    updateVoti(conn);
+                    InsertPlayerToDB(conn);
+                }
+            };
+
+            // schedule the task to run starting now and then every hour...
+            timer.schedule(hourlyTask, 0l, 1000 * 60 * 60);
+
+            while (true) {
+                try {
+                    // wait a connection
+                    clientSocket = serverSocket.accept();
+                    number++;
+                    //create and starts a CommunicationThread, a thread wich communicate with the client
+                    new CommunicationThread(clientSocket, number, conn, this).start();
+                    socketArray.add(clientSocket);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
         }
         catch (IOException e){
             e.printStackTrace();
         }
 
-        System.out.println("server is running on: "+Inet4Address.getLocalHost().getHostAddress());
-
-        //InsertPlayerToDB(doc);
-        conn = ConnectToDB();
-
-        //Download voti e inserimento nel DB
-        //downloadVoti(conn);
-
-
-        //Cerca la giornata massima e prova a scaricare le seguenti.
-        // Fa questo ogni ora
-        Timer timer = new Timer ();
-        TimerTask hourlyTask = new TimerTask () {
-            @Override
-            public void run () {
-
-                updateVoti(conn);
-                InsertPlayerToDB(conn);
-            }
-        };
-
-        // schedule the task to run starting now and then every hour...
-        //TODO: moltiplica per 60
-        timer.schedule (hourlyTask, 0l, 1000*60*30);
-
-
-        //Download calendario e inserimento nel DB
-        //DownloadCalendar(conn);
-
-        //Send Email
-        //SendEmailToUser();
-
-
-        while (true) {
-            try {
-                clientSocket = serverSocket.accept();
-                number++;
-                new EchoThread(clientSocket,number,conn,this).start();
-                System.out.println("Ciao");
-                socketArray.add(clientSocket);
-            }
-            catch (IOException e){
-                e.printStackTrace();
-            }
-
-
-
-        }
-
+        return null;
     }
 
 
@@ -131,7 +114,7 @@ public class EchoServer extends Task {
         this.serverSocket = serverSocket;
     }
 
-    public EchoServer(ArrayList<UserSocket> userArrayList) {
+    public Server(ArrayList<UserSocket> userArrayList) {
         this.userArrayList = userArrayList;
     }
 

@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/FantaServer.iml" filepath="$PROJECT_DIR$/FantaServer.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Maven/Maven.iml" filepath="$PROJECT_DIR$/Maven/Maven.iml" />
     </modules>
   </component>
 </project>
