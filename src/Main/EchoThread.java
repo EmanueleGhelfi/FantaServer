@@ -693,7 +693,7 @@ public class EchoThread extends Thread {
 
     }
 
-    private void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
+    public void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
         CommunicationInfo communicationInfo = new CommunicationInfo(code,toSend);
         Gson gson = new Gson();
         String communicationToSend = gson.toJson(communicationInfo);

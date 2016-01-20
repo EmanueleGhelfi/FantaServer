@@ -2,9 +2,11 @@ package Main; /**
  * Created by Emanuele on 15/10/2015.
  */
 
+import Model.CommunicationInfo;
 import Model.PlayerVoto;
 import Model.User;
 import Model.UserSocket;
+import com.google.gson.Gson;
 import javafx.concurrent.Task;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -316,7 +318,8 @@ public class EchoServer extends Task {
 
     public void SendNotification() {
         for(int i = 0; i< userArrayList.size();i++){
-            userArrayList.get(i).getOut().println("NOTIFICATION");
+            SendCommunicationInfo(userArrayList.get(i).getOut(),"NOTIFICATION","");
+            //userArrayList.get(i).getOut().println("NOTIFICATION");
         }
     }
 
@@ -696,5 +699,12 @@ public class EchoServer extends Task {
                userArrayList.remove(i);
            }
        }
+    }
+
+    public void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
+        CommunicationInfo communicationInfo = new CommunicationInfo(code,toSend);
+        Gson gson = new Gson();
+        String communicationToSend = gson.toJson(communicationInfo);
+        out.println(communicationToSend);
     }
 }
