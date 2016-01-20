@@ -25,6 +25,8 @@ public class Communication {
     public static final String AUTHOK = "AUTHOK";
     public static final String AUTHNO = "AUTHNO";
     public static final String READYFORPLAYERS = "READYFORPLAYERS";
+    public static final String READYFORTEAM = "READYFORTEAM";
+    public static final String READYFORUSER = "READYFORUSER";
 
     /**************** FOR REGISTER TASK *****************************/
     public static final String READY = "READY";

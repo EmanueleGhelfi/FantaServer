@@ -68,15 +68,16 @@ public class EchoThread extends Thread {
                     out.println("Ciao client numero " + number + " Hai scritto " + line);
                     */
                     System.out.println(line);
-
-                    switch (line){
+                    Gson gson = new Gson();
+                    CommunicationInfo communicationInfo = gson.fromJson(line,CommunicationInfo.class);
+                    switch (communicationInfo.getCode()){
                         case (Communication.Auth):
-                            out.println(Communication.OK);
-                            PreAuthClient(in,out);
+                            //out.println(Communication.OK);
+                            PreAuthClient(in,out,communicationInfo.getInfo());
                             break;
 
                         case (Communication.GETDATA):
-                            SendPor();
+                            SendAllPlayer();
                             break;
                         case (Communication.OKPOR):
                             SendDef();
@@ -88,13 +89,13 @@ public class EchoThread extends Thread {
                             SendAtt();
                             break;
                         case(Communication.SENDTEAM):
-                            ReceiveNewTeam(in,out);
+                            ReceiveNewTeam(in,out,communicationInfo.getInfo());
                             break;
                         case (Communication.GETTEAM):
                             SendUserTeam();
                             break;
                         case (Communication.SENDTITOLARI):
-                            getTitolari(in,out);
+                            getTitolari(in,out,communicationInfo.getInfo());
                             break;
                         case (Communication.GETCLASSIFICA):
                             SendClassifica(in,out);
@@ -103,10 +104,10 @@ public class EchoThread extends Thread {
                             SendAllPlayers(in,out);
                             break;
                         case (Communication.SENDMODIFIEDTEAM):
-                            ReceiveModifiedTeam(in,out);
+                            ReceiveModifiedTeam(in,out,communicationInfo.getInfo());
                             break;
                         case (Communication.GETVOTI):
-                            SendVoti(in,out);
+                            SendVoti(in,out,communicationInfo.getInfo());
                             break;
                         case (Communication.GETGIORNATE):
                             SendGiornate(in,out);
@@ -127,7 +128,7 @@ public class EchoThread extends Thread {
                             SendResultsToUser(in,out);
                             break;
                         case (Communication.SENDMODIFIEDUSER):
-                            GetModifiedUser(in,out);
+                            GetModifiedUser(in,out,communicationInfo.getInfo());
                             break;
                         case (Communication.GETINFO):
                             SendInfo(in,out);
@@ -135,6 +136,9 @@ public class EchoThread extends Thread {
                         case ("GETENDPOS"):
                             System.out.println("GETENDPOS");
                             SendEndPos(in,out);
+                            break;
+                        case (Communication.CANSENDTEAM):
+                            CanSendTeam(in,out);
                             break;
 
 
@@ -178,8 +182,8 @@ public class EchoThread extends Thread {
                 while (res.next() && !res.getString("userName").equals(currentUser.getUserName()) ){
                     cont++;
                 }
-
-                out.println(""+cont);
+                SendCommunicationInfo(out,"END",""+cont);
+                //out.println(""+cont);
                 System.out.println(cont);
             }
              catch (SQLException e) {
@@ -189,7 +193,7 @@ public class EchoThread extends Thread {
     }
 
     private void SendInfo(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORINFO);
+        //out.println(Communication.READYFORINFO);
         InfoClass infoClass = new InfoClass();
         try {
             Statement s = conn.createStatement();
@@ -216,7 +220,7 @@ public class EchoThread extends Thread {
             s.execute("DROP VIEW PRES");
             Gson gson = new Gson();
             String infoString = gson.toJson(infoClass);
-            out.println(infoString);
+            SendCommunicationInfo(out,Communication.READYFORINFO,infoString);
         } catch (SQLException e) {
             e.printStackTrace();
             Statement s2 = null;
@@ -231,11 +235,8 @@ public class EchoThread extends Thread {
         }
     }
 
-    private void GetModifiedUser(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORMODIFIEDUSER);
+    private void GetModifiedUser(BufferedReader in, PrintWriter out,String userString) {
         Gson gson = new Gson();
-        try {
-            String userString = in.readLine();
             User user = gson.fromJson(userString,User.class);
             boolean alreadyExist = SearchForExistingUser(user);
             if(!alreadyExist){
@@ -247,15 +248,13 @@ public class EchoThread extends Thread {
                 //ChangeInSquadre(user);
                 this.currentUser=user;
                 mainInstance.addUser(currentUser,out);
-                out.println(Communication.USEROK);
+                //out.println(Communication.USEROK);
+                SendCommunicationInfo(out,Communication.USEROK,"");
             }
             else {
-                out.println(Communication.USERNO);
+                SendCommunicationInfo(out,Communication.USERNO,"");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-    }
 
     private void ChangeInSquadre(User user) {
         try {
@@ -345,7 +344,7 @@ public class EchoThread extends Thread {
     }
 
     private void SendResultsToUser(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORRESULTS);
+        //out.println(Communication.READYFORRESULTS);
         try {
             Statement s = conn.createStatement();
 
@@ -357,16 +356,14 @@ public class EchoThread extends Thread {
             }
 
             //Send to Client
-            if(in.readLine().equals(Communication.READYFORRESULTS)){
+            //if(in.readLine().equals(Communication.READYFORRESULTS)){
                 Gson gson = new Gson();
                 String resultsString = gson.toJson(results);
-                out.println(resultsString);
-            }
+                //out.println(resultsString);
+            SendCommunicationInfo(out,Communication.READYFORRESULTS,resultsString);
 
 
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -377,7 +374,8 @@ public class EchoThread extends Thread {
 
         File myFile = new File("C:\\Users\\Emanuele\\Desktop\\userPhoto\\"+currentUser.getUserName()+".jpg");
         if(myFile.exists()) {
-            out.println(Communication.READYFORIMAGE);
+            //out.println(Communication.READYFORIMAGE);
+            SendCommunicationInfo(out,Communication.READYFORIMAGE,"");
             try {
                 if (in.readLine().equals(Communication.READYFORIMAGE)) {
                     try {
@@ -408,17 +406,58 @@ public class EchoThread extends Thread {
 
             }
         }else {
-            out.println(Communication.NOIMAGE);
+            SendCommunicationInfo(out,Communication.NOIMAGE,"");
         }
     }
 
-    private void PreAuthClient(BufferedReader in, PrintWriter out) {
-        try {
-            String userString = in.readLine();
+    private void PreAuthClient(BufferedReader in, PrintWriter out, String userString) {
             Gson gson = new Gson();
             SimpleUser user = gson.fromJson(userString,SimpleUser.class);
             AuthClient(user.getUserName(),user.getPassword());
-        } catch (IOException e) {
+    }
+
+    private void CanSendTeam(BufferedReader in,PrintWriter out){
+        int nextGiornata=0;
+
+        Date minData = new Date(2015,8,15);
+        Statement s = null;
+        try {
+            s = conn.createStatement();
+
+
+        //Find the next day
+        ResultSet res = s.executeQuery("SELECT max(Giornata) as maxGiornata FROM votogiocatore");
+
+        while (res.next())
+            nextGiornata = 1 + res.getInt("maxGiornata");
+
+        ResultSet res2 = s.executeQuery("SELECT min(data) as minData FROM calendario WHERE giornata="+nextGiornata+"");
+
+        while (res2.next()){
+            minData = res2.getDate("minData");
+        }
+
+        java.util.Date datastr = new java.util.Date(minData.getTime());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String date = format.format(datastr);
+        System.out.println("MinData : "+date);
+        if(minData==(new Date(2015/8/15))) {
+            SendCommunicationInfo(out,"READYFORDATE",date);
+            //out.println(date);
+            //SendCommunicationInfo(out,"END","");
+            SendEndPos(in,out);
+
+        }
+        else {
+            //out.println(date);
+            SendCommunicationInfo(out,"READYFORDATE",date);
+            //TODO: remove
+            //out.println("END");
+            //SendCommunicationInfo(out,"END","");
+            SendEndPos(in,out);
+
+        }
+        } catch (SQLException e) {
             e.printStackTrace();
         }
 
@@ -427,9 +466,12 @@ public class EchoThread extends Thread {
     private void SendUser(BufferedReader in, PrintWriter out) {
         Gson gson = new Gson();
         String userString = gson.toJson(currentUser);
-        out.println(userString);
+        //out.println(userString);
+        SendCommunicationInfo(out,Communication.READYFORUSER,userString);
         //sync is used to synchronize client and server
+        /*
         try {
+
             String sync = in.readLine();
             if(sync.equals(Communication.CANSENDTEAM)){
                 int nextGiornata=0;
@@ -470,13 +512,14 @@ public class EchoThread extends Thread {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        */
     }
 
     private void SendLastDay(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORLASTDAY);
+        //out.println(Communication.READYFORLASTDAY);
         try {
-            String line = in.readLine();
-            if(line.equals(Communication.READYFORLASTDAY)){
+            //String line = in.readLine();
+            //if(line.equals(Communication.READYFORLASTDAY)){
                 Statement s = conn.createStatement();
                 ArrayList<SimpleTeam> simpleTeams = new ArrayList<>();
                 // OLD VERSION
@@ -489,22 +532,20 @@ public class EchoThread extends Thread {
                 }
                 Gson gson = new Gson();
                 String classifica = gson.toJson(simpleTeams);
-                out.println(classifica);
+                //out.println(classifica);
                 System.out.println(classifica);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+                SendCommunicationInfo(out,Communication.READYFORLASTDAY,classifica);
+        }catch (SQLException e) {
             e.printStackTrace();
         }
 
     }
 
     private void SendGiornate(BufferedReader in, PrintWriter out) {
-        out.println("READYFORGIORNATE");
+        //out.println("READYFORGIORNATE");
         try {
-            String line = in.readLine();
-            if(line.equals("READYFORGIORNATE")) {
+            //String line = in.readLine();
+            //if(line.equals("READYFORGIORNATE")) {
                 Statement s = conn.createStatement();
                 ResultSet res = s.executeQuery("SELECT max(Giornata) as maxGiornata from votogiocatore");
 
@@ -512,22 +553,20 @@ public class EchoThread extends Thread {
                 while (res.next()) {
                     giornata = res.getInt("maxGiornata");
                 }
-                out.println("" + giornata);
+                //out.println("" + giornata);
                 System.out.println("Max giornata = " + giornata);
-            }
+                SendCommunicationInfo(out,Communication.READYFORGIORNATE,""+giornata);
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
-    private void SendVoti(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORVOTI);
+    private void SendVoti(BufferedReader in, PrintWriter out,String giornata) {
+        //out.println(Communication.READYFORVOTI);
         ArrayList votesPlayer = new ArrayList();
         try {
-            String giornata= in.readLine();
+            //String giornata= in.readLine();
             System.out.println("GIORNATA "+giornata);
             Statement s = conn.createStatement();
             ResultSet res = s.executeQuery("SELECT formazione.Cognome, votogiocatore.Voto, formazione.Titolare, giocatori.Ruolo, formazione.Entrato,formazione.Sostituito FROM (formazione left join votogiocatore on formazione.Cognome = votogiocatore.Cognome and formazione.giornata = votogiocatore.Giornata) JOIN giocatori on formazione.Cognome = giocatori.Cognome and formazione.idGioc=giocatori.id WHERE formazione.userName = '"+currentUser.getUserName()+"' and formazione.nomeSquadra='"+currentUser.getTeamName()+"' and formazione.giornata='"+giornata+"' order by formazione.Titolare DESC");
@@ -537,33 +576,23 @@ public class EchoThread extends Thread {
             Gson gson = new Gson();
             String toSend = gson.toJson(votesPlayer);
             System.out.println("VOTI: " + toSend);
-            out.println(toSend);
+           // out.println(toSend);
+            SendCommunicationInfo(out,Communication.READYFORVOTI,toSend);
 
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private void ReceiveModifiedTeam(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORMODIFIEDTEAM);
-        try {
-            String team = in.readLine();
+    private void ReceiveModifiedTeam(BufferedReader in, PrintWriter out,String team) {
             Gson gson = new Gson();
-            Type listType = new TypeToken<ArrayList<Player>>() {
-            }.getType();
-            this.team = gson.fromJson(team,listType);
-            System.out.println("Team: " + team.toString());
-            ModifyTeamInDB(in,out);
-        } catch (IOException e) {
-            e.printStackTrace();
+            TeamMercato teamMercato = gson.fromJson(team,TeamMercato.class);
+            this.team = teamMercato.getPlayers();
+            System.out.println("Team: " + team);
+            ModifyTeamInDB(in,out,teamMercato.getSoldi());
         }
 
-
-    }
-
-    private void ModifyTeamInDB(BufferedReader in, PrintWriter out) {
+    private void ModifyTeamInDB(BufferedReader in, PrintWriter out, int soldi) {
         ArrayList<Player> backup = new ArrayList<>();
 
         try {
@@ -591,14 +620,9 @@ public class EchoThread extends Thread {
             }
             //update money
             //s.execute("UPDATE client cl,(SELECT sum(Costo) as costo, squadre.username FROM squadre join giocatori on squadre.idGioc = giocatori.id GROUP by squadre.username) temp set cl.Soldi = 250 - temp.costo where temp.username = cl.Username");
-            out.println("GETMONEY");
-            try {
-                int money = Integer.parseInt(in.readLine());
+                int money = soldi;
                 s.execute("UPDATE client set Soldi="+money+" WHERE Username='"+currentUser.getUserName()+"'");
                 currentUser.setSoldi(money);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
             //Look for a team for the next day and delete it
             s.execute("DELETE FROM formazione WHERE userName='"+currentUser.getUserName()+"' and nomeSquadra='"+currentUser.getTeamName()+"' and giornata = 1 + (SELECT max(giornata) FROM votogiocatore)");
         } catch (SQLException e) {
@@ -623,10 +647,8 @@ public class EchoThread extends Thread {
     }
 
     private void SendAllPlayers(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORALLPLAYERS);
+        //out.println(Communication.READYFORALLPLAYERS);
         try {
-            String line = in.readLine();
-            if(line.equals(Communication.READYFORALLPLAYERS)) {
                 Statement s = conn.createStatement();
                 ArrayList allplayers = new ArrayList();
                 ResultSet res = s.executeQuery("SELECT * from giocatori WHERE presente=TRUE");
@@ -635,20 +657,21 @@ public class EchoThread extends Thread {
                 }
                 Gson gson = new Gson();
                 String toSend = gson.toJson(allplayers);
-                out.println(toSend);
-            }
+                SendCommunicationInfo(out,Communication.READYFORALLPLAYERS,toSend);
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /** Fatto
+     *
+     * @param in
+     * @param out
+     */
     private void SendClassifica(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORCLASSIFICA);
+        //out.println(Communication.READYFORCLASSIFICA);
         try {
-            String line = in.readLine();
-            if(line.equals(Communication.READYFORCLASSIFICA)){
+            //if(line.equals(Communication.READYFORCLASSIFICA)){
                 Statement s = conn.createStatement();
                 ArrayList<SimpleTeam> simpleTeams = new ArrayList<>();
                 // OLD VERSION
@@ -661,15 +684,20 @@ public class EchoThread extends Thread {
                 }
                 Gson gson = new Gson();
                 String classifica = gson.toJson(simpleTeams);
-                out.println(classifica);
+                SendCommunicationInfo(out,Communication.READYFORCLASSIFICA,classifica);
+                //out.println(classifica);
                 System.out.println(classifica);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
+        }  catch (SQLException e) {
             e.printStackTrace();
         }
 
+    }
+
+    private void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
+        CommunicationInfo communicationInfo = new CommunicationInfo(code,toSend);
+        Gson gson = new Gson();
+        String communicationToSend = gson.toJson(communicationInfo);
+        out.println(communicationToSend);
     }
 
     private void SendUserTeam() {
@@ -693,25 +721,19 @@ public class EchoThread extends Thread {
             Gson gson = new Gson();
             String json = gson.toJson(players);
             System.out.println("OK, FATTO");
-            out.println(json);
+            //out.println(json);
+            SendCommunicationInfo(out,Communication.READYFORTEAM,json);
         }
         catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    private void ReceiveNewTeam(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READY);
-        try {
-            String userJson = in.readLine();
+    private void ReceiveNewTeam(BufferedReader in, PrintWriter out,String userJson) {
             Gson gson = new Gson();
             User newUser = gson.fromJson(userJson, User.class);
             AddNewUserToDb(newUser,in,out);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-    }
 
     private void AddNewUserToDb(User newUser, BufferedReader in, PrintWriter out) {
         System.out.println("CONTROLLO :" + newUser.getUserName());
@@ -730,7 +752,7 @@ public class EchoThread extends Thread {
         }
         else {
             System.out.println("Authno");
-            out.println(Communication.AUTHNO);
+            SendCommunicationInfo(out,Communication.AUTHNO,"");
         }
 
     }
@@ -815,7 +837,7 @@ public class EchoThread extends Thread {
             this.currentUser = newUser;
             GetFileFromUser(in,out);
             System.out.println("Salvataggio file e inserimento avvenuto");
-            out.println(Communication.AUTHOK);
+            SendCommunicationInfo(out,Communication.AUTHOK,"");
         }
         catch (Exception e){
             e.printStackTrace();
@@ -827,7 +849,8 @@ public class EchoThread extends Thread {
     private void GetFileFromUser(BufferedReader in, PrintWriter out) {
 
         File file;
-        out.println(Communication.FILE);
+        //out.println(Communication.FILE);
+        SendCommunicationInfo(out,Communication.FILE,"");
         if(currentUser!=null) {
              file = new File("C:\\Users\\Emanuele\\Desktop\\userPhoto\\" + currentUser.getUserName() + ".jpg");
         }
@@ -952,28 +975,64 @@ public class EchoThread extends Thread {
         }
     }
 
-    private void SendPor() {
+    private void SendAllPlayer() {
         System.out.println("SONO QUA");
         PrintWriter out = null;
-        ArrayList<Player> players = new ArrayList<>();
+        ArrayList<Player> goalkeepers = new ArrayList<>();
+        ArrayList<Player> defensors = new ArrayList<>();
+        ArrayList<Player> midfielders = new ArrayList<>();
+        ArrayList<Player> strikers = new ArrayList<>();
         try {
             Statement st = conn.createStatement();
             ResultSet res = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='P' and presente=TRUE");
             while(res.next()){
-                players.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+                goalkeepers.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
             }
-            players.sort(new Comparator<Player>() {
+            goalkeepers.sort(new Comparator<Player>() {
                 @Override
                 public int compare(Player o1, Player o2) {
                     return ((Player)o1).getCognome().compareTo(((Player)o2).getCognome());
                 }
             });
+
+            ResultSet res2 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='D' and presente=TRUE");
+            while(res2.next()){
+                defensors.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+            }
+            defensors.sort(new Comparator<Player>() {
+                @Override
+                public int compare(Player o1, Player o2) {
+                    return ((Player)o1).getCognome().compareTo(((Player)o2).getCognome());
+                }
+            });
+
+            ResultSet res3 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='C' and presente=TRUE");
+            while(res3.next()){
+                midfielders.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+            }
+            midfielders.sort(new Comparator<Player>() {
+                @Override
+                public int compare(Player o1, Player o2) {
+                    return ((Player)o1).getCognome().compareTo(((Player)o2).getCognome());
+                }
+            });
+
+            ResultSet res4 = st.executeQuery("SELECT * FROM giocatori WHERE Ruolo='A' and presente=TRUE");
+            while(res4.next()){
+                strikers.add(new Player(res.getString("Cognome"),res.getInt("Costo"),res.getInt("id"), res.getString("Ruolo").charAt(0),res.getString("Squadra")));
+            }
+            strikers.sort(new Comparator<Player>() {
+                @Override
+                public int compare(Player o1, Player o2) {
+                    return ((Player)o1).getCognome().compareTo(((Player)o2).getCognome());
+                }
+            });
+
             out = new PrintWriter(socket.getOutputStream(),true);
             Gson gson = new Gson();
-            out.println(gson.toJson(players));
-            //output.flush();
-            //output.close();
-            System.out.println(players.toString());
+            AllPlayer allPlayer = new AllPlayer(defensors,goalkeepers,midfielders,strikers);
+            String allPlayerString = gson.toJson(allPlayer);
+            SendCommunicationInfo(out,Communication.GETDATA,allPlayerString);
             System.out.println("Fine");
         }
         catch (Exception e){
@@ -1031,12 +1090,12 @@ public class EchoThread extends Thread {
             if(resSize>0 && !AlreadyAuth(currentUser)) {
                 System.out.println("Client Authorized");
                 out = new PrintWriter(socket.getOutputStream(), true);
-                out.println(Communication.AUTHOK);
+                SendCommunicationInfo(out,Communication.AUTHOK,"");
                 mainInstance.addUser(currentUser,out);
             }
             else  {
                 out = new PrintWriter(socket.getOutputStream(), true);
-                out.println(Communication.AUTHNO);
+                SendCommunicationInfo(out,Communication.AUTHNO,"");
             }
         }
         catch (Exception e){
@@ -1060,27 +1119,19 @@ public class EchoThread extends Thread {
         return false;
     }
 
-    public void getTitolari(BufferedReader in, PrintWriter out) {
-        out.println(Communication.READYFORTIT);
-        try {
-            String stringTitolari = in.readLine();
+    public void getTitolari(BufferedReader in, PrintWriter out, String info) {
             Gson gson = new Gson();
-            Type listType = new TypeToken<ArrayList<Player>>() {
+            /*Type listType = new TypeToken<ArrayList<Player>>() {
             }.getType();
-            this.titolari = gson.fromJson(stringTitolari,listType);
+            */
+            TeamClass teamClass = gson.fromJson(info,TeamClass.class);
+            this.titolari = teamClass.getTitolari();
             System.out.println("Titolari: " + titolari.toString());
-
-            out.println(Communication.READYFORRIS);
-            String stringRiserve = in.readLine();
-            this.riserve = gson.fromJson(stringRiserve,listType);
+            this.riserve = teamClass.getRiserve();
             System.out.println("Riserve: "+riserve.size());
 
             InsertTitolariToDB();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-    }
 
     private void InsertTitolariToDB() {
         try {
