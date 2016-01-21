@@ -5,9 +5,10 @@ package Model;
  */
 public class CommunicationInfo {
 
+    //The code of the Request
     String code;
+    //Information associated to the request
     String info;
-
 
     public CommunicationInfo(String code, String info) {
         this.code = code;

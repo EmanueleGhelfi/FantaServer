@@ -50,27 +50,20 @@ public class CommunicationThread extends Thread {
     }
 
     public void run() {
-        //InputStreamReader in = null;
         BufferedReader in = null;
         PrintWriter out = null;
-        //SendWelcome();
-        //Main.Server.mossa = 0;
         try {
+            //Open the buffer
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            //reader = new BufferedReader(new InputStreamReader(in));
             out = new PrintWriter(socket.getOutputStream(), true);
             String line;
-            //SendEmailToUser();
                 while ((line = in.readLine()) != null) {
-                    /*System.out.println(line);
-                    out.println("Ciao client numero " + number + " Hai scritto " + line);
-                    */
                     System.out.println(line);
                     Gson gson = new Gson();
+                    //parse Json
                     CommunicationInfo communicationInfo = gson.fromJson(line,CommunicationInfo.class);
                     switch (communicationInfo.getCode()){
                         case (Communication.Auth):
-                            //out.println(Communication.OK);
                             PreAuthClient(in,out,communicationInfo.getInfo());
                             break;
 
@@ -138,25 +131,6 @@ public class CommunicationThread extends Thread {
                         case (Communication.CANSENDTEAM):
                             CanSendTeam(in,out);
                             break;
-
-
-                        /*default: if(auth && !user){
-                            System.out.println("OKuser");
-                            out.println("OKUSER");
-                            username = line;
-                            user = true;
-                        }
-                            else {
-                            System.out.println("OKPW");
-                            password = line;
-                            //InsertClientToDB(username, password);
-                            AuthClient(username,password);
-                            auth = false;
-                            user = false;
-                            pw = false;
-                        }
-                            break;
-                            */
                     }
                 }
             } catch (IOException e) {
