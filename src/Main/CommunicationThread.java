@@ -415,17 +415,11 @@ public class CommunicationThread extends Thread {
         System.out.println("MinData : "+date);
         if(minData==(new Date(2015/8/15))) {
             SendCommunicationInfo(out,"READYFORDATE",date);
-            //out.println(date);
-            //SendCommunicationInfo(out,"END","");
             SendEndPos(in,out);
 
         }
         else {
-            //out.println(date);
             SendCommunicationInfo(out,"READYFORDATE",date);
-            //TODO: remove
-            //out.println("END");
-            //SendCommunicationInfo(out,"END","");
             SendEndPos(in,out);
 
         }
@@ -438,57 +432,10 @@ public class CommunicationThread extends Thread {
     private void SendUser(BufferedReader in, PrintWriter out) {
         Gson gson = new Gson();
         String userString = gson.toJson(currentUser);
-        //out.println(userString);
         SendCommunicationInfo(out,Communication.READYFORUSER,userString);
-        //sync is used to synchronize client and server
-        /*
-        try {
-
-            String sync = in.readLine();
-            if(sync.equals(Communication.CANSENDTEAM)){
-                int nextGiornata=0;
-
-                Date minData = new Date(2015,8,15);
-                Statement s = conn.createStatement();
-
-                //Find the next day
-                ResultSet res = s.executeQuery("SELECT max(Giornata) as maxGiornata FROM votogiocatore");
-
-                while (res.next())
-                    nextGiornata = 1 + res.getInt("maxGiornata");
-
-                ResultSet res2 = s.executeQuery("SELECT min(data) as minData FROM calendario WHERE giornata="+nextGiornata+"");
-
-                while (res2.next()){
-                    minData = res2.getDate("minData");
-                }
-
-                java.util.Date datastr = new java.util.Date(minData.getTime());
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String date = format.format(datastr);
-                System.out.println("MinData : "+date);
-                if(minData==(new Date(2015/8/15))) {
-                    out.println(date);
-                    out.println("END");
-
-                }
-                else {
-                    out.println(date);
-                    //TODO: remove
-                    out.println("END");
-                }
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        */
     }
 
     private void SendLastDay(BufferedReader in, PrintWriter out) {
-        //out.println(Communication.READYFORLASTDAY);
         try {
             //String line = in.readLine();
             //if(line.equals(Communication.READYFORLASTDAY)){
