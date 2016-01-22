@@ -251,10 +251,6 @@ public class Server extends Task<Void> {
     private void UpdateViewClassifica(int giornata, Connection conn) {
         int currentDay = 1;
         try {
-            /*
-            Statement s0 = conn.createStatement();
-            s0.execute("DELETE FROM punteggi");
-            */
             Statement s0 = conn.createStatement();
             ResultSet res0 = s0.executeQuery("SELECT max(giornata) as giornata from punteggi");
             while (res0.next()){
@@ -274,7 +270,8 @@ public class Server extends Task<Void> {
 
                 for(int j=0;j<users.size();j++){
                     //Find team for the users
-                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, giocatori.Ruolo FROM (formazione left JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata) JOIN giocatori on formazione.Cognome = giocatori.Cognome WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
+                    //TODO: improve
+                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, giocatori.Ruolo FROM (formazione left JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata and formazione.idGioc=votogiocatore.idGioc) JOIN giocatori on formazione.Cognome = giocatori.Cognome WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
                     ArrayList<PlayerVoto> players = new ArrayList<>();
                     while (resTeam.next()){
                         players.add(new PlayerVoto(resTeam.getString("Ruolo").charAt(0),resTeam.getString("Cognome"),resTeam.getBoolean("Titolare"),resTeam.getFloat("Voto"),resTeam.getString("PosRiserva")));
