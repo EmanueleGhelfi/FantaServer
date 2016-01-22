@@ -174,6 +174,9 @@ public class Server extends Task<Void> {
             while (needToContinue) {
                 Document doc = Jsoup.connect("http://www.gazzetta.it/calcio/fantanews/voti/serie-a-2015-16/giornata-"+giornata).get();
                 Elements name = doc.getElementsByClass("playerNamein");
+                Elements role = doc.getElementsByClass("playerRole");
+                System.out.println(role);
+                System.out.println(role.size());
                 if(name.size()==0){
                     needToContinue=false;
                 }
@@ -193,15 +196,30 @@ public class Server extends Task<Void> {
 
                     System.out.println("Name dopo" + name.size());
                     System.out.println("Voti dopo " + voto.size());
-
+                    int k =0;
                     // Insert into DB. Solo metà array siccome è ripetuto 2 volte
                     for (int j = 0; j < name.size()/2 - 1; j++) {
+
                         String votoStringa = voto.get(j).text();
                         if(votoStringa.equals("-") || votoStringa.equals("FV"))
                                 votoStringa="0";
                         float votoNumero = Float.parseFloat(votoStringa);
-                        boolean val = s.execute("INSERT INTO votogiocatore(Cognome,Giornata,Voto) VALUE ('" + name.get(j).text() + "'," + giornata + "," + votoNumero + ")");
+                        String trueRole = role.get(k).text();
+                        while (trueRole.length()>1){
+                            k++;
+                            trueRole=role.get(k).text();
+                        }
+                        if(trueRole.equals("T")){
+                            trueRole="C";
+                            System.out.println(name.get(j).text() + "T" +" "+trueRole);
+                        }
+
+                        System.out.println(name.get(j).text() + " "+trueRole);
+                        boolean val = s.execute("INSERT INTO votogiocatore(Cognome,Giornata,Voto,role) VALUE ('" + name.get(j).text() + "'," + giornata + "," + votoNumero + ",'"+trueRole+"')");
+                        k++;
                     }
+
+                    s.execute("UPDATE votogiocatore,giocatori set votogiocatore.idGioc=giocatori.id where votogiocatore.Cognome = giocatori.Cognome and votogiocatore.role=giocatori.Ruolo");
 
                     giornata++;
                 }
