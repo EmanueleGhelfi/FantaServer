@@ -271,7 +271,7 @@ public class Server extends Task<Void> {
                 for(int j=0;j<users.size();j++){
                     //Find team for the users
                     //TODO: improve
-                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, giocatori.Ruolo FROM (formazione left JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata and formazione.idGioc=votogiocatore.idGioc) JOIN giocatori on formazione.Cognome = giocatori.Cognome WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
+                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, giocatori.Ruolo FROM (formazione left JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata and formazione.idGioc=votogiocatore.idGioc) JOIN giocatori on formazione.Cognome = giocatori.Cognome and formazione.idGioc=giocatori.id WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
                     ArrayList<PlayerVoto> players = new ArrayList<>();
                     while (resTeam.next()){
                         players.add(new PlayerVoto(resTeam.getString("Ruolo").charAt(0),resTeam.getString("Cognome"),resTeam.getBoolean("Titolare"),resTeam.getFloat("Voto"),resTeam.getString("PosRiserva")));

@@ -69,4 +69,14 @@ public class ServerMain extends Application {
     public void sendNotification() {
         task.SendNotification();
     }
+
+    public static void main(String[] args) throws IOException {
+        launch(args);
+        System.out.println("No UI");
+        ServerMain serverMain = new ServerMain();
+        serverMain.OnStartServer();
+
+    }
+
+
 }
