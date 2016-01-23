@@ -62,8 +62,9 @@ public class Server extends Task<Void> {
             TimerTask hourlyTask = new TimerTask() {
                 @Override
                 public void run() {
-                    updateVoti(conn);
                     InsertPlayerToDB(conn);
+                    updateVoti(conn);
+
                 }
             };
 
@@ -161,66 +162,72 @@ public class Server extends Task<Void> {
 
     private void updateVoti(Connection conn) {
         int giornata = 0;
+        //Dice se ho trovato una nuova giornata
         boolean findNewDay=false;
         System.out.println("STO CERCANDO UPDATE...");
         try {
             Statement s = conn.createStatement();
+            //Cerco l'ultima giornata presente nel DB
             ResultSet res = s.executeQuery("SELECT MAX(Giornata) AS maxGiornata FROM votogiocatore");
             boolean needToContinue = true;
             res.next();
             giornata = res.getInt("maxGiornata");
-            System.out.println("Giornata = "+giornata);
+            //Devo scaricare la giornata successiva
             giornata++;
+            /* Ciclo che a partire dalla giornata corrente cerca i voti di tutte le giornate successive, se presenti.
+                Appena trova ua pagina senza nomi si ferma perchè non ci sono giornate successive.
+             */
             while (needToContinue) {
                 Document doc = Jsoup.connect("http://www.gazzetta.it/calcio/fantanews/voti/serie-a-2015-16/giornata-"+giornata).get();
                 Elements name = doc.getElementsByClass("playerNamein");
                 Elements role = doc.getElementsByClass("playerRole");
-                System.out.println(role);
-                System.out.println(role.size());
                 if(name.size()==0){
+                    //Se non sono presenti voti non devo più andare avanti nel download
                     needToContinue=false;
                 }
                 else {
+                    //Ho trovato una nuova giornata, devo aggiornare i voti e la classifica
                     findNewDay=true;
                     Elements voto = doc.getElementsByClass("fvParameter");
                     for (int k = 0; k < voto.size(); k++) {
                         Element element = voto.get(k);
                         String string = element.text();
                         if (!string.equals("FV")) {
-                            //nothing
+                            //Non faccio niente
                         } else {
-                            //System.out.println("TROVATO UNO");
+                            //Rimuovo il voto siccome non è il vero voto ma è un testo
                             voto.remove(k);
                         }
                     }
-
+                    //Controllo dimensione degli array
                     System.out.println("Name dopo" + name.size());
                     System.out.println("Voti dopo " + voto.size());
+                    //Indice nell'array dei ruoli, siccome ogni ruolo è ripetuto due volte di seguito
                     int k =0;
-                    // Insert into DB. Solo metà array siccome è ripetuto 2 volte
-                    for (int j = 0; j < name.size()/2 - 1; j++) {
+                    // Inserimento nel DB. Solo metà array siccome i nomi sono ripetuti 2 volte
+                    for (int j = 0; j < name.size()/2; j++) {
 
                         String votoStringa = voto.get(j).text();
                         if(votoStringa.equals("-") || votoStringa.equals("FV"))
                                 votoStringa="0";
                         float votoNumero = Float.parseFloat(votoStringa);
+                        //Prendo il ruolo successivo se è più lungo di un carattere
                         String trueRole = role.get(k).text();
                         while (trueRole.length()>1){
                             k++;
                             trueRole=role.get(k).text();
                         }
+                        //Correzione ruolo, se è T imposto C
                         if(trueRole.equals("T")){
                             trueRole="C";
-                            System.out.println(name.get(j).text() + "T" +" "+trueRole);
                         }
 
-                        System.out.println(name.get(j).text() + " "+trueRole);
                         boolean val = s.execute("INSERT INTO votogiocatore(Cognome,Giornata,Voto,role) VALUE ('" + name.get(j).text() + "'," + giornata + "," + votoNumero + ",'"+trueRole+"')");
                         k++;
                     }
-
+                    // Aggiorno l'id dei giocatori nella tabella votogiocatore
                     s.execute("UPDATE votogiocatore,giocatori set votogiocatore.idGioc=giocatori.id where votogiocatore.Cognome = giocatori.Cognome and votogiocatore.role=giocatori.Ruolo");
-
+                    //Passo alla giornata successiva
                     giornata++;
                 }
             }
@@ -236,7 +243,6 @@ public class Server extends Task<Void> {
             UpdateViewClassifica(giornata - 1, conn);
             //Manda notica e email dei nuovi voti
             SendNotification();
-            //SendEmail(conn);
         }
     }
 
@@ -254,7 +260,10 @@ public class Server extends Task<Void> {
             Statement s0 = conn.createStatement();
             ResultSet res0 = s0.executeQuery("SELECT max(giornata) as giornata from punteggi");
             while (res0.next()){
-                currentDay = Integer.parseInt(res0.getString("giornata"));
+                if(res0.getString("giornata")==null || res0.getString("giornata")=="null")
+                    currentDay=0;
+                else
+                    currentDay = Integer.parseInt(res0.getString("giornata"));
             }
             for (int i =currentDay+1;i<=giornata;i++){
                 //Find all user for every day
@@ -505,23 +514,17 @@ public class Server extends Task<Void> {
         return null;
     }
 
-    private static void InsertPlayerToDB(Connection conn) {
-        /*String url ="jdbc:mysql://localhost:3306/DBFIRST";
-        String driver = "com.mysql.jdbc.Driver";
-        String userName = "manu";
-        String password = "inter";
-        */
+    private void InsertPlayerToDB(Connection conn) {
 
         try {
-            /*Class.forName(driver).newInstance();
-            Connection conn = DriverManager.getConnection(url, userName, password);
-            */
+            //Download HTML
             Document doc = Jsoup.connect("http://www.gazzetta.it/calcio/fantanews/statistiche/serie-a-2015-16/all").get();
             java.sql.Statement st = conn.createStatement();
             Elements name = doc.getElementsByClass("field-giocatore");
             Elements team = doc.getElementsByClass("field-sqd");
             Elements price = doc.getElementsByClass("field-q");
             Elements role = doc.getElementsByClass("field-ruolo");
+            //Imposto a 0 l'attributo presente di tutti i giocatori. In questo modo riconosco i giocatori non più presenti
             st.execute("UPDATE giocatori set presente='0'");
             for (int i = 0; i< name.size()-1; i++) {
                 String ruolo = role.get(i+1).text().substring(0,1);
@@ -530,30 +533,37 @@ public class Server extends Task<Void> {
                     ruolo="C";
                 }
                 try {
-
+                    //Provo a inserirlo, se non ci sono eccezioni lo inserisco normalmente
                     boolean val = st.execute("INSERT INTO giocatori (Cognome,Squadra,Costo,Ruolo,presente)  VALUE ('"+name.get(i+1).text()+"','"+team.get(i+1).getElementsByClass("hidden-team-name").get(0).text()+"','"+price.get(i+1).text()+"','"+ruolo+"','1')");
                     if (val)
                         System.out.println("OK, inserito: "+ name.get(i+1).text());
                 }
                 catch (SQLException e){
-                    System.out.println("ERRORE: "+name.get(i+1).text());
+                    System.out.println("Già presente: "+name.get(i+1).text());
+                    //Se è già presente aggiorno i suoi parametri
                     boolean retry = st.execute("UPDATE giocatori set Squadra='"+team.get(i+1).getElementsByClass("hidden-team-name").get(0).text()+"', Costo='"+price.get(i+1).text()+"', presente='1' WHERE Cognome='"+name.get(i+1).text()+"' AND Ruolo='"+ruolo+"'");
                     if(retry)
                         System.out.println("Modificato");
                 }
 
             }
+
+            //Stampo giocatori aggiornati per controllo
             ResultSet res = st.executeQuery("SELECT * FROM giocatori");
             while (res.next()) {
                 int id = res.getInt("id");
                 String msg = res.getString("Cognome");
                 String squadra = res.getString("Squadra");
-                System.out.println(id + "\t" + msg+"\t"+squadra); }
+                boolean presente = res.getBoolean("presente");
+                System.out.println(id + "\t" + msg+"\t"+squadra+"\t"+presente); }
+            //Aggiorno soldi client che possiede un giocatore non più presente
             st.execute("UPDATE client cl,(SELECT sum(Costo) as costo, squadre.username as tempUser FROM giocatori join squadre on giocatori.id = squadre.idGioc WHERE giocatori.presente = FALSE GROUP by squadre.username) temp set cl.Soldi= cl.Soldi+costo WHERE cl.Username = temp.tempUser");
+            //Cancello giocatore dalla squadra corrispondente
             st.execute("DELETE squadre FROM squadre JOIN giocatori on squadre.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
-            st.execute("DELETE formazione FROM formazione JOIN giocatori on formazione.idGioc = giocatori.id WHERE giocatori.presente = FALSE");
-        }
-        catch (Exception e) {
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("NO connection");
             e.printStackTrace();
         }
     }
