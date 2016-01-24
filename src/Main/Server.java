@@ -255,47 +255,51 @@ public class Server extends Task<Void> {
     }
 
     private void UpdateViewClassifica(int giornata, Connection conn) {
-        int currentDay = 1;
+        int currentDay=0;
         try {
             Statement s0 = conn.createStatement();
+            //Seleziono la giornata massima
             ResultSet res0 = s0.executeQuery("SELECT max(giornata) as giornata from punteggi");
             while (res0.next()){
-                if(res0.getString("giornata")==null || res0.getString("giornata")=="null")
+                if(res0.getString("giornata")==null || res0.getString("giornata").equals("null"))
                     currentDay=0;
                 else
                     currentDay = Integer.parseInt(res0.getString("giornata"));
             }
+            //aggiorno i punteggi da currentDay +1 fino a giornata che viene passata a questa funzione
             for (int i =currentDay+1;i<=giornata;i++){
-                //Find all user for every day
+                //Seleziono tutti i giocatori per ogni giornata
                 Statement s = conn.createStatement();
                 Statement s2 = conn.createStatement();
                 ResultSet res = s.executeQuery("SELECT DISTINCT Username,TeamName FROM client");
                 ArrayList<String> users = new ArrayList<>();
                 ArrayList<String> teams = new ArrayList<>();
+
                 while (res.next()){
                     users.add(res.getString("Username"));
                     teams.add(res.getString("TeamName"));
                 }
 
                 for(int j=0;j<users.size();j++){
-                    //Find team for the users
-                    //TODO: improve
-                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, giocatori.Ruolo FROM (formazione left JOIN votogiocatore on formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata and formazione.idGioc=votogiocatore.idGioc) JOIN giocatori on formazione.Cognome = giocatori.Cognome and formazione.idGioc=giocatori.id WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
+                    //Ottengo la squadra per ogni utente
+                    ResultSet resTeam = s2.executeQuery("SELECT formazione.Cognome, Titolare,PosRiserva,votogiocatore.Voto, " +
+                            "giocatori.Ruolo FROM (formazione left JOIN votogiocatore on " +
+                            "formazione.Cognome = votogiocatore.Cognome AND formazione.giornata = votogiocatore.Giornata" +
+                            " and formazione.idGioc=votogiocatore.idGioc) JOIN giocatori on " +
+                            "formazione.Cognome = giocatori.Cognome and formazione.idGioc=giocatori.id " +
+                            "WHERE formazione.giornata='"+i+"' and userName ='"+users.get(j)+"'");
                     ArrayList<PlayerVoto> players = new ArrayList<>();
                     while (resTeam.next()){
                         players.add(new PlayerVoto(resTeam.getString("Ruolo").charAt(0),resTeam.getString("Cognome"),resTeam.getBoolean("Titolare"),resTeam.getFloat("Voto"),resTeam.getString("PosRiserva")));
                     }
+                    //Calcolo reale dei punti
                     CalculatePoint(users.get(j),teams.get(j),i,players,conn);
                 }
             }
-            System.out.println("FINE CALCOLO");
-
-
+            System.out.println("FINE CALCOLO PUNTI");
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private void CalculatePoint(String user, String team, int giornata, ArrayList<PlayerVoto> players, Connection conn) {
@@ -307,10 +311,8 @@ public class Server extends Task<Void> {
         boolean present = false;
         System.out.println(" "+user+" " +team+" giornata "+ giornata);
         for (int i = 0; i< players.size(); i++){
-            //System.out.println("Player :" +players.get(i).getCognome() +" titolare :" +players.get(i).isTitolare()+ " voto: "+players.get(i).getVoto()+" pos:"+players.get(i).getPosizione());
             if(players.get(i).isTitolare()){
                 titolari.add(players.get(i));
-                //players.remove(i);
                 try {
                     Statement statement2;
                     statement2 = conn.createStatement();
@@ -331,10 +333,8 @@ public class Server extends Task<Void> {
         }
 
         for (int j = 0; j<titolari.size();j++){
-            //System.out.println("titolare : "+titolari.get(j).getCognome()+" voto: "+titolari.get(j).getCognome());
             //se non ha giocato
             if(titolari.get(j).getVoto()==0.0 && contSostituzioni<3){
-                //System.out.println("sostituito : "+titolari.get(j).getCognome()+" voto: "+titolari.get(j).getVoto());
                 switch (titolari.get(j).getRuolo()){
                     case 'P':
                         posGiusta="PP";
