@@ -39,7 +39,7 @@ public class CommunicationThread extends Thread {
 
     private ArrayList<Player> team;
 
-    //Instance of Echo Server
+    //Instance of Server
     private Server mainInstance;
 
     public CommunicationThread(Socket clientSocket, int number, Connection conn, Server mainInstance) {
@@ -385,7 +385,7 @@ public class CommunicationThread extends Thread {
     private void PreAuthClient(BufferedReader in, PrintWriter out, String userString) {
             Gson gson = new Gson();
             SimpleUser user = gson.fromJson(userString,SimpleUser.class);
-            AuthClient(user.getUserName(),user.getPassword());
+            AuthClient(in,out,user.getUserName(),user.getPassword());
     }
 
     private void CanSendTeam(BufferedReader in,PrintWriter out){
@@ -983,8 +983,7 @@ public class CommunicationThread extends Thread {
         return false;
     }
 
-    private void AuthClient(String user,String pw){
-        PrintWriter out = null;
+    private void AuthClient(BufferedReader in, PrintWriter out, String user, String pw){
         int resSize=0;
         try {
             Statement st = conn.createStatement();
@@ -1008,12 +1007,10 @@ public class CommunicationThread extends Thread {
 
             if(resSize>0 && !AlreadyAuth(currentUser)) {
                 System.out.println("Client Authorized");
-                out = new PrintWriter(socket.getOutputStream(), true);
                 SendCommunicationInfo(out,Communication.AUTHOK,"");
                 mainInstance.addUser(currentUser,out);
             }
             else  {
-                out = new PrintWriter(socket.getOutputStream(), true);
                 SendCommunicationInfo(out,Communication.AUTHNO,"");
             }
         }
