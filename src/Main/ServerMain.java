@@ -47,8 +47,8 @@ public class ServerMain extends Application {
     }
 
     public void OnStartServer() {
-        task = new Server(this);
-         thread = new Thread(task);
+        task = new Server();
+        thread = new Thread(task);
         thread.start();
     }
 
@@ -70,13 +70,16 @@ public class ServerMain extends Application {
         task.SendNotification();
     }
 
-    public static void main(String[] args) throws IOException {
-        launch(args);
-        System.out.println("No UI");
-        ServerMain serverMain = new ServerMain();
-        serverMain.OnStartServer();
+    public static void main(String[] args) throws IOException{
+            System.out.println("CIAO");
+            if ( args.length>0 && args[0].equals("noui")) {
+                System.out.println("No UI");
+
+
+            } else {
+                launch(args);
+            }
+        }
 
     }
 
-
-}

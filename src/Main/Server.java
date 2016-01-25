@@ -32,14 +32,12 @@ public class Server extends Task<Void> {
 
     private ArrayList<UserSocket> userArrayList = new ArrayList<>();
     private int portNumber;
-    private ServerMain serverMain;
     private ServerSocket serverSocket;
     private ArrayList<Socket> socketArray = new ArrayList<>();
 
-    public Server(ServerMain serverMain) {
+    public Server() {
         userArrayList = new ArrayList<>();
         portNumber = 4444;
-        this.serverMain = serverMain;
         socketArray = new ArrayList<>();
     }
 

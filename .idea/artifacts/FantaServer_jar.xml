@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FantaServer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/FantaServer_jar</output-path>
+    <root id="archive" name="FantaServer.jar">
+      <element id="module-output" name="FantaServer" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/sun/mail/javax.mail/1.5.4/javax.mail-1.5.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/javax/activation/activation/1.1/activation-1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/javax/activation/activation/1.1.1/activation-1.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.4/gson-2.4.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/mysql/mysql-connector-java/5.1.36/mysql-connector-java-5.1.36.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jsoup/jsoup/1.8.3/jsoup-1.8.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/Desktop/jfoenix.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

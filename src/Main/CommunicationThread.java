@@ -612,10 +612,14 @@ public class CommunicationThread extends Thread {
 
     }
 
+    // Code è il codice della comunicazione. ToSend è il Json contente l'informazione necessaria
     public void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
+        //istanzio oggetto di tipo communicationInfo con code e toSend
         CommunicationInfo communicationInfo = new CommunicationInfo(code,toSend);
         Gson gson = new Gson();
+        //Serializzo
         String communicationToSend = gson.toJson(communicationInfo);
+        //Invio al client
         out.println(communicationToSend);
     }
 
@@ -1066,15 +1070,7 @@ public class CommunicationThread extends Thread {
                 st.execute("UPDATE squadre SET squadre.Pos='"+titolari.get(i).getPos()+"' WHERE squadre.username = '"+currentUser.getUserName()+"' AND squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+titolari.get(i).getId()+"");
             }
 
-
             /** Find Riserve **/
-            /*
-            ResultSet res = st.executeQuery("SELECT squadre.Cognome FROM squadre WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName='"+currentUser.getTeamName()+"' AND squadre.Cognome NOT IN (SELECT formazione.Cognome FROM formazione WHERE formazione.giornata="+giornata+" AND formazione.userName='"+currentUser.getUserName()+"' AND formazione.nomeSquadra='"+currentUser.getTeamName()+"')");
-            while (res.next()){
-                riserve.add(res.getString("Cognome"));
-            }
-            */
-
             for (int i = 0; i<riserve.size(); i++) {
                 //Insert riserve into db
                 st.execute("INSERT INTO formazione(giornata, userName, nomeSquadra, Cognome, Titolare,PosRiserva,idGioc) VALUE (" + giornata + ",'" + currentUser.getUserName() + "','" + currentUser.getTeamName() + "','" + riserve.get(i).getCognome() + "',FALSE,'"+riserve.get(i).getPos()+"',"+riserve.get(i).getId()+" )");
@@ -1093,7 +1089,6 @@ public class CommunicationThread extends Thread {
                 //Insert pos into db
                 st.execute("UPDATE squadre SET squadre.Pos='"+0+"' WHERE squadre.username = '"+currentUser.getUserName()+"' AND squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+arrayList.get(i).intValue()+"");
             }
-
 
             System.out.println("TITOLARI "+titolari.toString());
             System.out.println("Riserve "+ riserve.toString());
