@@ -2,6 +2,7 @@ package Main; /**
  * Created by Emanuele on 15/10/2015.
  */
 
+import Constants.SecurityClass;
 import Model.CommunicationInfo;
 import Model.PlayerVoto;
 import Model.User;
@@ -432,7 +433,7 @@ public class Server extends Task<Void> {
                 String to = receiver;
 
                 // Sender's email ID needs to be mentioned
-                String from = "fantadeveloper@gmail.com";
+                String from = SecurityClass.emailUser;
 
                 // Assuming you are sending email from gmail
                 String host = "smtp.gmail.com";
@@ -442,7 +443,7 @@ public class Server extends Task<Void> {
 
                 //setup properties
                 properties.put("mail.smtp.user", from);
-                properties.put("mail.smtp.password", "fantaDeveloper94");
+                properties.put("mail.smtp.password", SecurityClass.emailPassword);
                 properties.put("mail.smtp.host", host);
                 properties.put("mail.smtp.port", "587");
                 properties.put("mail.debug", "true");
@@ -458,7 +459,7 @@ public class Server extends Task<Void> {
                 Session session = Session.getDefaultInstance(properties, new javax.mail.Authenticator() {
                     @Override
                     protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
-                        return new javax.mail.PasswordAuthentication("fantadeveloper@gmail.com", "fantaDeveloper94");
+                        return new javax.mail.PasswordAuthentication(SecurityClass.emailUser, SecurityClass.emailPassword);
                     }
                 });
 
@@ -499,9 +500,9 @@ public class Server extends Task<Void> {
     private static Connection ConnectToDB(){
         String url ="jdbc:mysql://localhost:3306/DBFIRST";
         String driver = "com.mysql.jdbc.Driver";
-        //TODO: it was manu
-        String userName = "root";
-        String password = "inter";
+
+        String userName = SecurityClass.dbUser;
+        String password = SecurityClass.dbPassword;
 
         try {
             Class.forName(driver).newInstance();

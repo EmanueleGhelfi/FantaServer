@@ -31,6 +31,7 @@ public class ServerMain extends Application {
         primaryStage.setTitle("FantaServer");
         primaryStage.getIcons().add(new Image("/Images/server.png"));
         primaryStage.setScene(new Scene(root, 500, 500));
+        primaryStage.setResizable(false);
         mainController = loader.getController();
         mainController.init(this);
         primaryStage.show();
