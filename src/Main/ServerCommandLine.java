@@ -4,8 +4,8 @@ package Main;
  * Created by Emanuele on 25/01/2016.
  */
 public class ServerCommandLine {
-    private Server task;
-    private Thread thread;
+    private static Server task;
+    private static Thread thread;
 
     public ServerCommandLine(Server task, Thread thread) {
         this.task = task;
@@ -32,9 +32,14 @@ public class ServerCommandLine {
     }
 
     public static void main(String[] args){
-        ServerCommandLine serverCommandLine = new ServerCommandLine();
-        serverCommandLine.task = new Server();
-        serverCommandLine.thread = new Thread(serverCommandLine.task);
-        serverCommandLine.thread.start();
+        System.out.println("CIAO");
+        task = new Server();
+        thread = new Thread(task);
+        thread.setDaemon(true);
+        thread.start();
+        while (thread.isAlive()){
+            System.out.println("alive");
+        }
+
     }
 }

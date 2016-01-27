@@ -48,6 +48,7 @@ public class Server extends Task<Void> {
         Socket clientSocket = null;
         int number = 0;
         Connection conn;
+        System.out.println("SONO il thread");
 
         try {
             serverSocket = new ServerSocket(portNumber);
@@ -498,7 +499,8 @@ public class Server extends Task<Void> {
     private static Connection ConnectToDB(){
         String url ="jdbc:mysql://localhost:3306/DBFIRST";
         String driver = "com.mysql.jdbc.Driver";
-        String userName = "manu";
+        //TODO: it was manu
+        String userName = "root";
         String password = "inter";
 
         try {
