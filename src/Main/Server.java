@@ -464,7 +464,7 @@ public class Server extends Task<Void> {
                 });
 
                 try {
-                    System.out.println("CIAO");
+
                     // Create a default MimeMessage object.
                     MimeMessage message = new MimeMessage(session);
 
@@ -498,7 +498,7 @@ public class Server extends Task<Void> {
     }
 
     private static Connection ConnectToDB(){
-        String url ="jdbc:mysql://localhost:3306/DBFIRST";
+        String url ="jdbc:mysql://localhost:3306/dbfirst";
         String driver = "com.mysql.jdbc.Driver";
 
         String userName = SecurityClass.dbUser;

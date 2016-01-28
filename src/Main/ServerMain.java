@@ -75,8 +75,9 @@ public class ServerMain extends Application {
             System.out.println("CIAO");
             if ( args.length>0 && args[0].equals("noui")) {
                 System.out.println("No UI");
-
-
+                ServerMain serverMain = new ServerMain();
+                serverMain.OnStartServer();
+                System.out.println("Start");
             } else {
                 launch(args);
             }
