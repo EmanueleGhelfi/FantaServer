@@ -27,6 +27,9 @@ public class Communication {
     public static final String READYFORPLAYERS = "READYFORPLAYERS";
     public static final String READYFORTEAM = "READYFORTEAM";
     public static final String READYFORUSER = "READYFORUSER";
+    public static final String GETMONEY = "GETMONEY";
+    public static final String END = "END";
+    public static final String READYFORDATE = "READYFORDATE";
 
     /**************** FOR REGISTER TASK *****************************/
     public static final String READY = "READY";

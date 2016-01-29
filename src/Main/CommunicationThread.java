@@ -165,31 +165,30 @@ public class CommunicationThread extends Thread {
     }
 
     private void SendInfo(BufferedReader in, PrintWriter out) {
-        //out.println(Communication.READYFORINFO);
         InfoClass infoClass = new InfoClass();
         try {
             Statement s = conn.createStatement();
             //TODO: Migliorare la Query
             //creo view con media
-            s.execute("CREATE VIEW MEDIE(cognome,media) as SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome");
-            ResultSet res = s.executeQuery("SELECT MEDIE.cognome, media from MEDIE WHERE media = (SELECT max(media) from MEDIE)");
+            //s.execute("CREATE VIEW MEDIE(cognome,media) as SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome");
+            ResultSet res = s.executeQuery("SELECT MEDIE.cognome, max(media) as media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE");
             while (res.next()){
                 infoClass.setBestPlayer(res.getString("cognome"));
                 infoClass.setMediabest(res.getFloat("media"));
             }
-            ResultSet res2 = s.executeQuery("SELECT MEDIE.cognome, media from MEDIE WHERE media= (SELECT min(media) from medie)");
+            ResultSet res2 = s.executeQuery("SELECT MEDIE.cognome, min(media) as media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE");
             while (res2.next()){
                 infoClass.setWorstPlayer(res2.getString("cognome"));
                 infoClass.setMediaWorst(res2.getFloat("media"));
             }
-            s.execute("DROP VIEW MEDIE");
-            s.execute("CREATE VIEW PRES(cognome,pres) as SELECT Cognome, COUNT(*) as pres FROM formazione WHERE formazione.userName='"+currentUser.getUserName()+"' AND formazione.nomeSquadra = '"+currentUser.getTeamName()+"' and (formazione.Titolare='1' or formazione.Entrato='1') GROUP BY Cognome");
-            ResultSet res3 = s.executeQuery("SELECT PRES.cognome, pres from PRES WHERE pres=(SELECT max(pres) from PRES);");
+            s.execute("DROP VIEW if EXISTS MEDIE ");
+           // s.execute("CREATE VIEW PRES(cognome,pres) as SELECT Cognome, COUNT(*) as pres FROM formazione WHERE formazione.userName='"+currentUser.getUserName()+"' AND formazione.nomeSquadra = '"+currentUser.getTeamName()+"' and (formazione.Titolare='1' or formazione.Entrato='1') GROUP BY Cognome");
+            ResultSet res3 = s.executeQuery("SELECT PRES.cognome, max(pres) as pres from (SELECT Cognome, COUNT(*) as pres FROM formazione WHERE formazione.userName='"+currentUser.getUserName()+"' AND formazione.nomeSquadra = '"+currentUser.getTeamName()+"' and (formazione.Titolare='1' or formazione.Entrato='1') GROUP BY Cognome) as PRES");
             while (res3.next()){
                 infoClass.setMostPresPlayer(res3.getString("cognome"));
                 infoClass.setPres(res3.getInt("pres"));
             }
-            s.execute("DROP VIEW PRES");
+            s.execute("DROP VIEW if EXISTS PRES");
             Gson gson = new Gson();
             String infoString = gson.toJson(infoClass);
             SendCommunicationInfo(out,Communication.READYFORINFO,infoString);
@@ -198,8 +197,8 @@ public class CommunicationThread extends Thread {
             Statement s2 = null;
             try {
                 s2 = conn.createStatement();
-                s2.execute("DROP VIEW MEDIE");
-                s2.execute("DROP VIEW PRES");
+                s2.execute("DROP VIEW  if EXISTS MEDIE ");
+                s2.execute("DROP VIEW  if EXISTS PRES");
             } catch (SQLException e1) {
                 e1.printStackTrace();
             }
@@ -390,6 +389,7 @@ public class CommunicationThread extends Thread {
 
     private void CanSendTeam(BufferedReader in,PrintWriter out){
         int nextGiornata=0;
+        boolean end=false;
 
         Date minData = new Date(2015,8,15);
         Statement s = null;
@@ -406,21 +406,25 @@ public class CommunicationThread extends Thread {
         ResultSet res2 = s.executeQuery("SELECT min(data) as minData FROM calendario WHERE giornata="+nextGiornata+"");
 
         while (res2.next()){
-            minData = res2.getDate("minData");
+            if(res2.getDate("minData")!=null) {
+                minData = res2.getDate("minData");
+            }
+            else {
+                end=true;
+            }
         }
 
         java.util.Date datastr = new java.util.Date(minData.getTime());
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date = format.format(datastr);
         System.out.println("MinData : "+date);
-        if(minData==(new Date(2015/8/15))) {
-            SendCommunicationInfo(out,"READYFORDATE",date);
+        if(end) {
+            SendCommunicationInfo(out,Communication.READYFORDATE,date);
             SendEndPos(in,out);
-
         }
         else {
-            SendCommunicationInfo(out,"READYFORDATE",date);
-            SendEndPos(in,out);
+            SendCommunicationInfo(out,Communication.READYFORDATE,date);
+           // SendEndPos(in,out);
 
         }
         } catch (SQLException e) {
@@ -630,7 +634,7 @@ public class CommunicationThread extends Thread {
             Statement st2 = conn.createStatement();
             //System.out.println(currentUser.getTeam().size());
             ArrayList <Player> players = new ArrayList<>();
-            ResultSet res = st.executeQuery("SELECT * FROM squadre WHERE TeamName='" + currentUser.getTeamName() + "' AND username ='"+currentUser.getUserName()+"'");
+            ResultSet res = st.executeQuery("SELECT * FROM squadre WHERE BINARY TeamName='" + currentUser.getTeamName() + "' AND BINARY username ='"+currentUser.getUserName()+"'");
             while (res.next()) {
                 ResultSet playerInfo = st2.executeQuery("SELECT * FROM giocatori WHERE Cognome = '" + res.getString("Cognome") + "' AND id="+res.getInt("idGioc")+"");
                 Player player = new Player();
@@ -991,7 +995,7 @@ public class CommunicationThread extends Thread {
         int resSize=0;
         try {
             Statement st = conn.createStatement();
-            ResultSet res = st.executeQuery("SELECT * FROM client WHERE Username='" + user + "' AND Pw='" + pw + "'");
+            ResultSet res = st.executeQuery("SELECT * FROM client WHERE BINARY Username='" + user + "' AND BINARY Pw='" + pw + "'");
             while (res.next()) {
                 if (res.getDate("DataNascita") != null){
                     java.util.Date datastr = new java.util.Date(res.getDate("DataNascita").getTime());
@@ -1061,13 +1065,13 @@ public class CommunicationThread extends Thread {
             int giornata = resultSet.getInt("maxGiornata");
             giornata++;
             //Delete previous team
-            st.execute("DELETE FROM formazione WHERE giornata="+giornata+" and nomeSquadra='"+currentUser.getTeamName()+"' AND userName='"+currentUser.getUserName()+"'");
+            st.execute("DELETE FROM formazione WHERE giornata="+giornata+" and BINARY nomeSquadra='"+currentUser.getTeamName()+"' AND BINARY userName='"+currentUser.getUserName()+"'");
 
             //Insert team
             for(int i = 0; i < titolari.size(); i ++){
                 st.execute("INSERT INTO formazione(giornata, userName, nomeSquadra, Cognome, Titolare,idGioc) VALUE ("+giornata+",'"+currentUser.getUserName()+"','"+currentUser.getTeamName()+"','"+titolari.get(i).getCognome()+"',TRUE,"+titolari.get(i).getId()+")");
                 //Insert pos into db
-                st.execute("UPDATE squadre SET squadre.Pos='"+titolari.get(i).getPos()+"' WHERE squadre.username = '"+currentUser.getUserName()+"' AND squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+titolari.get(i).getId()+"");
+                st.execute("UPDATE squadre SET squadre.Pos='"+titolari.get(i).getPos()+"' WHERE BINARY squadre.username = '"+currentUser.getUserName()+"' AND BINARY squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+titolari.get(i).getId()+"");
             }
 
             /** Find Riserve **/
@@ -1075,19 +1079,19 @@ public class CommunicationThread extends Thread {
                 //Insert riserve into db
                 st.execute("INSERT INTO formazione(giornata, userName, nomeSquadra, Cognome, Titolare,PosRiserva,idGioc) VALUE (" + giornata + ",'" + currentUser.getUserName() + "','" + currentUser.getTeamName() + "','" + riserve.get(i).getCognome() + "',FALSE,'"+riserve.get(i).getPos()+"',"+riserve.get(i).getId()+" )");
                 //Insert pos into db
-                st.execute("UPDATE squadre SET squadre.Pos='"+riserve.get(i).getPos()+"' WHERE squadre.username = '"+currentUser.getUserName()+"' AND squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+riserve.get(i).getId()+"");
+                st.execute("UPDATE squadre SET squadre.Pos='"+riserve.get(i).getPos()+"' WHERE BINARY squadre.username = '"+currentUser.getUserName()+"' AND BINARY squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+riserve.get(i).getId()+"");
             }
 
             //Find Tribuna
             ArrayList<Integer> arrayList = new ArrayList<>();
-            ResultSet res = st.executeQuery("SELECT squadre.Cognome,squadre.idGioc FROM squadre WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName='"+currentUser.getTeamName()+"' AND squadre.idGioc NOT IN (SELECT formazione.idGioc FROM formazione WHERE formazione.giornata="+giornata+" AND formazione.userName='"+currentUser.getUserName()+"' AND formazione.nomeSquadra='"+currentUser.getTeamName()+"')");
+            ResultSet res = st.executeQuery("SELECT squadre.Cognome,squadre.idGioc FROM squadre WHERE BINARY squadre.username='"+currentUser.getUserName()+"' AND BINARY squadre.TeamName='"+currentUser.getTeamName()+"' AND squadre.idGioc NOT IN (SELECT formazione.idGioc FROM formazione WHERE formazione.giornata="+giornata+" AND BINARY formazione.userName='"+currentUser.getUserName()+"' AND BINARY formazione.nomeSquadra='"+currentUser.getTeamName()+"')");
             while (res.next()){
                 arrayList.add(res.getInt("idGioc"));
             }
 
             for (int i = 0; i< arrayList.size(); i++){
                 //Insert pos into db
-                st.execute("UPDATE squadre SET squadre.Pos='"+0+"' WHERE squadre.username = '"+currentUser.getUserName()+"' AND squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+arrayList.get(i).intValue()+"");
+                st.execute("UPDATE squadre SET squadre.Pos='"+0+"' WHERE BINARY squadre.username = '"+currentUser.getUserName()+"' AND BINARY squadre.TeamName ='"+currentUser.getTeamName()+"' AND squadre.idGioc = "+arrayList.get(i).intValue()+"");
             }
 
             System.out.println("TITOLARI "+titolari.toString());
