@@ -358,8 +358,6 @@ public class Server extends Task<Void> {
                     if(!players.get(i).isTitolare() && (players.get(i).getPosizione())!= null && (players.get(i).getPosizione()).equals(posGiusta) && players.get(i).getVoto()!=0.0 ){
                         present = true;
 
-
-                        //System.out.println("Entrato :" +players.get(i).getCognome() +" voto: "+players.get(i).getVoto()+" Pos: "+players.get(i).getPosizione());
                         //Update db with substitution
                         try {
                             Statement statement4 = conn.createStatement();
@@ -372,7 +370,6 @@ public class Server extends Task<Void> {
                         somma = somma+players.get(i).getVoto();
                         players.remove(i);
                         contSostituzioni++;
-                        //System.out.println("sostituz : "+contSostituzioni);
 
                     }
                 }
@@ -429,13 +426,13 @@ public class Server extends Task<Void> {
                 receiver = res.getString("email");
             }
             if (receiver != null) {
-                // Recipient's email ID needs to be mentioned.
+                // Receiver mail
                 String to = receiver;
 
-                // Sender's email ID needs to be mentioned
+                // Sender's email
                 String from = SecurityClass.emailUser;
 
-                // Assuming you are sending email from gmail
+                // Gmail
                 String host = "smtp.gmail.com";
 
                 // Get system properties
@@ -484,7 +481,7 @@ public class Server extends Task<Void> {
                     Transport tr = session.getTransport("smtp");
                     tr.connect(session.getProperty("mail.smtp.host"), session.getProperty("mail.smtp.user"), session.getProperty("mail.smtp.password"));
 
-
+                    //Send message
                     tr.sendMessage(message, message.getAllRecipients());
                     tr.close();
                 } catch (MessagingException mex) {
@@ -497,33 +494,43 @@ public class Server extends Task<Void> {
 
     }
 
-    private static Connection ConnectToDB(){
-        String url ="jdbc:mysql://localhost:3306/dbfirst";
-        String driver = "com.mysql.jdbc.Driver";
+    //Return Connection to DB
+        private Connection ConnectToDB(){
+            //parametri necessari per la connessione con il Server MySQL
+            //necessario specificare host su cui è in esecuzione il server, la porta e il nome del database
+            String url ="jdbc:mysql://localhost:3306/dbfirst";
+            String driver = "com.mysql.jdbc.Driver";
 
-        String userName = SecurityClass.dbUser;
-        String password = SecurityClass.dbPassword;
+            // nome e password con i quali ci si interfaccia con il server
+            String userName = SecurityClass.dbUser;
+            String password = SecurityClass.dbPassword;
 
-        try {
-            Class.forName(driver).newInstance();
-            Connection conn = DriverManager.getConnection(url, userName, password);
-            return conn;
+            try {
+                Class.forName(driver).newInstance();
+                Connection conn = DriverManager.getConnection(url, userName, password);
+                return conn;
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+            return null;
         }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-        return null;
-    }
 
+
+    //Update player in DB, it's called every hour
     private void InsertPlayerToDB(Connection conn) {
 
         try {
             //Download HTML
             Document doc = Jsoup.connect("http://www.gazzetta.it/calcio/fantanews/statistiche/serie-a-2015-16/all").get();
             java.sql.Statement st = conn.createStatement();
+            //name
             Elements name = doc.getElementsByClass("field-giocatore");
+            //team
             Elements team = doc.getElementsByClass("field-sqd");
+            //money
             Elements price = doc.getElementsByClass("field-q");
+            //role
             Elements role = doc.getElementsByClass("field-ruolo");
             //Imposto a 0 l'attributo presente di tutti i giocatori. In questo modo riconosco i giocatori non più presenti
             st.execute("UPDATE giocatori set presente='0'");
@@ -569,6 +576,7 @@ public class Server extends Task<Void> {
         }
     }
 
+    //OLD VERSION
     public static void downloadVoti(Connection conn){
         try {
             Statement st = conn.createStatement();
@@ -618,12 +626,13 @@ public class Server extends Task<Void> {
 
     }
 
-
+    //Called when authenticate a user
     public void addUser(User currentUser,PrintWriter out) {
         System.out.println("Sto aggiungendo: "+currentUser.getUserName());
         userArrayList.add(new UserSocket(out,currentUser));
     }
 
+    //Called when a user exit
     public void removeUser(User currentUser,PrintWriter out) {
         System.out.println("Sto rimuovendo: "+currentUser.getUserName());
         UserSocket userSocket = new UserSocket(out,currentUser);
@@ -634,6 +643,7 @@ public class Server extends Task<Void> {
        }
     }
 
+    //Send Info to user
     public void SendCommunicationInfo(PrintWriter out, String code, String toSend ) {
         CommunicationInfo communicationInfo = new CommunicationInfo(code,toSend);
         Gson gson = new Gson();
