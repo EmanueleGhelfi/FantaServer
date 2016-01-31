@@ -124,8 +124,7 @@ public class CommunicationThread extends Thread {
                         case (Communication.GETINFO):
                             SendInfo(in,out);
                             break;
-                        case ("GETENDPOS"):
-                            System.out.println("GETENDPOS");
+                        case (Communication.GETENDPOS):
                             SendEndPos(in,out);
                             break;
                         case (Communication.CANSENDTEAM):
@@ -171,12 +170,12 @@ public class CommunicationThread extends Thread {
             //TODO: Migliorare la Query
             //creo view con media
             //s.execute("CREATE VIEW MEDIE(cognome,media) as SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome");
-            ResultSet res = s.executeQuery("SELECT MEDIE.cognome, max(media) as media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE");
+            ResultSet res = s.executeQuery("SELECT MEDIE.cognome, media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE WHERE media=(SELECT max(media) from (SELECT (AVG (Voto)) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as NEWMEDIE)");
             while (res.next()){
                 infoClass.setBestPlayer(res.getString("cognome"));
                 infoClass.setMediabest(res.getFloat("media"));
             }
-            ResultSet res2 = s.executeQuery("SELECT MEDIE.cognome, min(media) as media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE");
+            ResultSet res2 = s.executeQuery("SELECT MEDIE.cognome, media from (SELECT squadre.Cognome as cognome, AVG (Voto) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as MEDIE WHERE media=(SELECT min(media) from (SELECT (AVG (Voto)) as media FROM squadre JOIN votogiocatore on squadre.idGioc=votogiocatore.idGioc WHERE squadre.username='"+currentUser.getUserName()+"' AND squadre.TeamName = '"+currentUser.getTeamName()+"' GROUP BY squadre.Cognome) as NEWMEDIE)");
             while (res2.next()){
                 infoClass.setWorstPlayer(res2.getString("cognome"));
                 infoClass.setMediaWorst(res2.getFloat("media"));

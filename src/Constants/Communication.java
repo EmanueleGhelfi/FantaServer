@@ -50,6 +50,7 @@ public class Communication {
     public static final String GETCLASSIFICA = "GETCLASSIFICA";
     public static final String GETLASTDAY = "GETLASTDAY";
     public static final String GETALLPLAYERS = "GETALLPLAYERS";
+    public static final String GETENDPOS = "GETENDPOS";
     public static final String SENDMODIFIEDTEAM = "SENDMODIFIEDTEAM";
     public static final String GETVOTI = "GETVOTI";
     public static final String GETGIORNATE = "GETGIORNATE";
